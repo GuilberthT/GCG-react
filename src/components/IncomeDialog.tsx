@@ -16,13 +16,12 @@ export const IncomeDialog: React.FC<IncomeDialogProps> = ({ open, onClose }) => 
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
 
-  // Fetch income types
   const { data: incomeTypes = [] } = useQuery<IncomeType[]>(['income-types'], async () => {
     const response = await fetchIncomeTypes();
     return response;
   });
 
-  // Mutation to create income
+  
   const mutation = useMutation(
     async (data) => {
       await createIncome(data);
