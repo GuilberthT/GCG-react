@@ -1,4 +1,4 @@
-import axios from "axios"
+import axios from "./axiosInstance"
 
 export interface Income {
   id?: number
@@ -23,6 +23,7 @@ export async function getIncomes(): Promise<Income[]> {
 
 export async function createIncome(payload: CreateIncomePayload): Promise<Income> {
   const response = await axios.post<{ data: Income }>('/incomes', payload)
+
   return response.data.data
 }
 

@@ -1,87 +1,93 @@
 import React, { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Select, MenuItem } from '@mui/material';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Select, MenuItem, SelectChangeEvent } from '@mui/material';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { createIncome, Income } from '../api/income';
-// import { IncomeType } from '../api/IncomeTypes';
-// import { fetchIncomeTypes } from '../api/IncomeTypes';
+import { createIncome, CreateIncomePayload } from '../api/income';
+import { fetchIncomeTypes, IncomeType } from '../api/IncomeTypes';
+import { useForm } from 'react-hook-form';
+import { LoadingButton } from '@mui/lab';
 
 interface IncomeDialogProps {
   open: boolean;
-  onClose: () => void;
+  closeModal: () => void;
 }
 
-// const queryClient = useQueryClient();
 
-export const IncomeDialog: React.FC<IncomeDialogProps> = ({ open, onClose }) => {
-  const [formData, setFormData] = useState({ amount: '', typeId: '', description: '', date: '', category: '' });
+export const IncomeDialog: React.FC<IncomeDialogProps> = ({ open, closeModal }) => {
+  const [incomeType, setIncomeType] = useState<string>('')
+
+  // const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
 
-  // const { data: incomeTypes } = useQuery<IncomeType[]>(['income-types'], async () => {
-  //   const response = await fetchIncomeTypes();
-  //   return response;
-  // });
+  const {
+    register,
+    handleSubmit,
+  } = useForm<CreateIncomePayload>();
+
+  const {
+    data: incomeTypes,
+    isPending
+  } = useQuery<IncomeType[]>({
+    queryKey: ['income-types'],
+    queryFn: fetchIncomeTypes
+  });
 
 
-  // const mutation = useMutation(
-  //   async (data: Income) => {
-  //     await createIncome(data);
-  //   },
-  //   {
-  //     onSuccess: () => {
-  //       queryClient.invalidateQueries(['get-total-incomes']);
-  //       onClose();
-  //       enqueueSnackbar('Receita registrada com sucesso!', { variant: 'success' });
-  //     },
-  //     onError: () => {
-  //       enqueueSnackbar('Erro ao registrar a receita.', { variant: 'error' });
-  //     },
-  //   }
-  // );
+  const { mutate, isPending: mutationPending } = useMutation({
+    mutationFn: (data: CreateIncomePayload) => createIncome(data),
+    onSuccess: () => {
+      closeModal();
+      enqueueSnackbar('Receita registrada com sucesso!', { variant: 'success' });
+    },
+    onError: () => {
+      enqueueSnackbar('Erro ao registrar a receita.', { variant: 'error' });
+    }
+  })
 
-  // const handleSubmit = () => {
-  //   mutation.mutate(formData);
-  // };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  function onSubmit(data: CreateIncomePayload) {
+    mutate({
+      value: data.amount,
+      incomeType: incomeType,
+      date: new Date,
+      description: 'ih rapaz'
+    });
   };
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={closeModal}>
       <DialogTitle>Receita</DialogTitle>
       <DialogContent>
         <TextField
           label="Valor"
-          name="amount"
           type="number"
           fullWidth
           margin="normal"
-          value={formData.amount}
-          onChange={handleChange}
+          {...register('amount')}
         />
         <Select
-          label="Tipo"
+          label="Tipo da receita"
           name="typeId"
           fullWidth
-          value={formData.typeId}
-          onChange={handleChange}
+          value={incomeType}
+          onChange={(e: SelectChangeEvent) => setIncomeType(e.target.value)}
         >
-          {/* {incomeTypes.map((type) => (
-            <MenuItem key={type.id} value={type.id}>
-              {type.name}
-            </MenuItem>
-          ))} */}
+          {
+            isPending ? 'carregando...' : incomeTypes?.map((type) => (
+              <MenuItem key={type._id} value={type._id}>
+                {type.description}
+              </MenuItem>
+            ))
+          }
         </Select>
+
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="secondary">
+        <Button onClick={closeModal} color="secondary">
           Cancelar
         </Button>
-        <Button onClick={() => { }} color="primary" variant="contained">
+        <LoadingButton onClick={handleSubmit(onSubmit)} loading={mutationPending} color="primary" variant="contained">
           Criar
-        </Button>
+        </LoadingButton>
       </DialogActions>
     </Dialog>
   );
