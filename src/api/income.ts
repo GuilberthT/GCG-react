@@ -1,19 +1,20 @@
+import type { Dayjs } from "dayjs"
 import axios from "./axiosInstance"
 
 export interface Income {
   id?: number
   description: string
   amount: number
-  date: string
+  date: Dayjs
   category: string
   total: number
 }
 
 export interface CreateIncomePayload {
   description: string
-  amount: number
+  value: number
   date: string
-  category: string
+  incomeType: string | null
 }
 
 export async function getIncomes(): Promise<Income[]> {
